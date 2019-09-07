@@ -1,5 +1,8 @@
+#!/usr/local/bin/python
 #The Snow Queen: a simple adventure game
 #by Milo Kim
+
+from enum import Enum, auto
 
 #define classes
 #class Game:
@@ -8,6 +11,20 @@
 #		self.rooms = rooms
 #	def win(self):
 #		print("Congratulations,", self.player + "!")
+
+class Direction(Enum):
+	NORTH = auto()
+	SOUTH = auto()
+	EAST = auto()
+	WEST = auto()
+
+def get_direction(s):
+	s = s.lower()
+	for name, dir in Direction.__members__.items():
+		if ((name.lower() == s) or (name.lower()[0] == s)):
+			return dir
+	return None
+
 class Element():
 	lastest_id = 1
 	def __init__(self, id, name, descr):
@@ -26,9 +43,6 @@ class Element():
 
 class Player(Element):
 	#attributes: name (string), location (Room), items (list of Items)
-
-	compass = {"n":"north", "s":"south", "e":"east", "w":"west"} #make enum
-
 	def __init__(self, name, descr, location, inventory = []):
 		self.id = Element.new_id
 		self.name = name
@@ -39,17 +53,13 @@ class Player(Element):
 		return self.name
 	def __repr__(self):
 		return self.__str__()
-	def move(self, dir):
+	def move(self, s):
 		#later, should really remember to untangle the letter-or-word functionality from move and back to the user interface
-		dir = dir.lower()
-		#print("got string:", dir)
-		if dir not in self.compass.values() and dir not in self.compass.keys():
+		dir = get_direction(s)
+		if (not dir):
 			print("Move_error: not a cardinal direction (north, east, south, west, or first letters thereof)")
-		elif dir in self.location.get_exits():
+		elif (dir in self.location.exits):
 			print("Moving", dir)
-			self.location = self.location.exits[dir[0]]
-		elif self.location.exits[dir]:
-			print("Moving", self.compass[dir])
 			self.location = self.location.exits[dir]
 		else:
 			print("Move_error: no exit that way")
@@ -82,7 +92,7 @@ class Player(Element):
 		for y in self.items:
 			if y.name.lower() == tool:
 				#print("found tool:", y.name)
-				y.use_on(good_target)
+				y.use_on(good_target, self)
 				break
 		else:
 			print("you don't have that with you")
@@ -92,13 +102,12 @@ class Player(Element):
 class Room(Element): 
 	#attributes: name (string), descr (string), objects (list of Things), exits (dictionary of chars->rooms)
 
-	compass = {"n":"north", "s":"south", "e":"east", "w":"west"}
-
 	def __init__(self, name, descr, objects = [], n = None, e = None, s = None, w = None):
 		self.id = Element.new_id
 		self.name = name
 		self.descr = descr
-		self.exits = {"n":n, "s":s, "e":e, "w":w}
+		self.exits = {}
+		self.add_exits(n = n, e = e, s = s, w = w)
 		self.objects = objects
 		#print("making", self.name, ": exits are", self.exits) 
 	def __str__(self):
@@ -107,16 +116,16 @@ class Room(Element):
 		return self.__str__()
 	def add_exits(self, n = None, e = None, s = None, w = None):
 		if n:
-			self.exits["n"] = n
+			self.exits[Direction.NORTH] = n
 		if e:
-			self.exits["e"] = e
+			self.exits[Direction.EAST] = e
 		if s:
-			self.exits["s"] = s
+			self.exits[Direction.SOUTH] = s
 		if w:
-			self.exits["w"] = w
+			self.exits[Direction.WEST] = w
 	def get_exits(self):
-		ex = [self.compass[dir] for dir in self.exits.keys() if self.exits[dir]]
-		return ex
+		# returns a list of the full words for exit directions
+		return [k.name.lower() for k in self.exits.keys()]
 	def inspect(self):
 		response = self.descr
 		for x in self.objects:
@@ -139,8 +148,8 @@ class Item(Thing):
 		self.descr = descr
 		self.use = use
 		self.is_changed = False
-	def use_on(self, target):
-		check = self.use(target)
+	def use_on(self, target, player):
+		check = self.use(target, player)
 		if check:
 			target.descr = check
 			target.is_changed = True
@@ -170,7 +179,7 @@ def run_game(player_name):
 		elif (command == "inventory"):
 			print(hero.items)
 		elif (command == "exits"):
-			print("Exits are:", hero.location.get_exits())
+			print("Exits are:", ", ".join(hero.location.get_exits()))
 		elif (command == "look"):
 			print(hero.location.inspect())
 		elif (command[:4] == "move"):
@@ -204,7 +213,7 @@ def run_game(player_name):
 
 def initialize_test_game(player_name, player_descr):
 	balloon = Thing("Balloon", "a test Set Piece, to be popped with the Pin")
-	def pin_pop(target):
+	def pin_pop(target, player):
 		if target.name == "Balloon":
 			print("pop!")
 			return True
@@ -268,7 +277,7 @@ def initialize_game(player_name, player_descr):
 	box = Thing("Wooden Box", """This large wooden box streches out the window to Kay's window. 
 		It carries a rose bush, now wilted from neglect""")
 
-	def water_rose(target, player1):
+	def water_rose(target, player):
 		if target.name == "Wooden Box" and target.is_changed == False:
 			print("You water the rose, and it seems to perk up with life and renewal against the bitter snow")
 			return """This large wooden box streches out the window to Kay's window. 
@@ -300,7 +309,7 @@ It also has a thatched roof, and outside are two wooden soldiers that present ar
 	cherry_orchard.add_exits(s = river_bank)
 
 	#creating player; things = red shoes, heart
-	def offer_shoes(target, player1):
+	def offer_shoes(target, player):
 		if target.name == "River":
 			print("You throw the shoes into the water, but the waves just carry them right back.\nMaybe if you were farther out...")
 			return False
@@ -311,14 +320,14 @@ You cry, but no one hears you but the sparrows, who sing as if to comfort you, "
 You watch the beautiful banks of the river pass by, and think that maybe the river is taking you to Kay, which cheers you.
 eventually you come to a house, where you see and old woman. At your request, she wades out to drag the boat back to land with her crutch.""")
 			player.location.add_exits(n = cherry_orchard)
-			plyaer.move("n")
+			player.move("n")
 			return "a boat - small compared to the river but quite large to someone of your size.\nIt is resting on the mud of the shore."
 		else:
 			print("You would never give up your fine red shoes like that.")
 			return False
 	shoes = Item("Red Shoes", "Your fine Red Shoes, which you like better than anything else you own", offer_shoes)
 
-	def use_heart(target, player1):
+	def use_heart(target, player):
 		if target.name == "flower_hat":
 			print("""you look at the woman's hat, and though you see an impossible multitude of flowers on it, some of which are strange and exotic and whose names you can only guess at...
 the prettiest of all of them is the rose. You realize with a jolt that roses, your favorite flower (for some reason you can't remember), are the only flower you hvae not seen in this house.

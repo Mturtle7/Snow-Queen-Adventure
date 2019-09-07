@@ -152,7 +152,57 @@ class Item(Thing):
 #		self.descr = descr
 #		self.is_changed = False
 
-def InitializeTestGame(player_name, player_descr):
+def run_game(player_name):
+	hero = initialize_game(player_name, "an innocent young girl, searching for her friend Kay")
+	print("You are", hero, ", distraught at Kay's disappearance")
+	print("""\ncommands are: 
+	quit, help, inventory, exits, look, 
+	move [compass direction - word or first letter], inspect [name], 
+	take [item_name], use [item_name] on [name]""")
+
+	to_quit = False
+	while(to_quit != True):
+		command = input("you are in {}. What do you do?\n".format(hero.location))
+		if (command == "quit"):
+			to_quit = True
+		elif (command == "help"):
+			print("commands are: quit, help, inventory, exits, look, inspect [item_name], move [compass direction]")
+		elif (command == "inventory"):
+			print(hero.items)
+		elif (command == "exits"):
+			print("Exits are:", hero.location.get_exits())
+		elif (command == "look"):
+			print(hero.location.inspect())
+		elif (command[:4] == "move"):
+			hero.move(command[5:])
+		elif (command[:7] == "inspect"):
+			x = command[8:].lower()
+			if x == hero.name.lower():
+				print(hero.inspect())
+			elif x == hero.location.name.lower():
+				print(hero.location.inspect())
+			elif x in [i.name.lower() for i in hero.items]:
+				for j in hero.items:
+					if x == j.name.lower():
+						print(j.inspect())
+			elif x in [i.name.lower() for i in hero.location.objects]:
+				for j in hero.location.objects:
+					if x == j.name.lower():
+						print(j.inspect())
+			else:
+				print("you don't see anything with that name here")
+		elif(command[:4] == "take"):
+			hero.take(command[5:])
+		elif(command[:3] == "use"):
+			on_index = command.find(" on ")
+			if on_index == -1:
+				print("use format: use [item_name] on [name]")
+			else:
+				hero.use_item(command[4:on_index], command[(on_index+4):])
+		else:
+			print("I don't understand that")
+
+def initialize_test_game(player_name, player_descr):
 	balloon = Thing("Balloon", "a test Set Piece, to be popped with the Pin")
 	def pin_pop(target):
 		if target.name == "Balloon":
@@ -164,15 +214,15 @@ def InitializeTestGame(player_name, player_descr):
 
 	pin = Item("Pin", "a test Item, to use on balloon", pin_pop)
 
-	test_roomN = Room("Testing Suite North", "a cold room")
+	test_room_north = Room("Testing Suite North", "a cold room")
 	test_room1 = Room("Testing Suite Start", "a boring room", [pin, balloon])
 
-	test_roomN.add_exits(s = test_room1)
-	test_room1.add_exits(n = test_roomN)
+	test_room_north.add_exits(s = test_room1)
+	test_room1.add_exits(n = test_room_north)
 
 	return Player(player_name, player_descr, test_room1)
 
-def InitializeGame(player_name, player_descr):
+def initialize_game(player_name, player_descr):
 
 	"""	map: n
 			w e
@@ -298,12 +348,14 @@ therefore they are obliged to be satisfied with a few flowers in flower-pots.
 In one of these large towns lived two poor children who had a garden something larger and better than a few flower-pots. 
 They were not brother and sister, but they loved each other almost as much as if they had been."""
 print(intro1)
-#playerName = input("The boy's name was Kay. What was the girl's name?")
-playerName = "Gerda"
+player_name = input("The boy's name was Kay. What was the girl's name?")
+#player_name = "Gerda"
 
-hero = InitializeGame(playerName, "an innocent young girl, searching for her friend Kay")
+run_game(player_name)
 
-#remember to rplace w/ player name
+
+
+#remember to replace "Gerda" w/ player name here if these are ever actually included in intro
 intro2 = """...Those were splendid summer days. How beautiful and fresh it was out among the rose-bushes, 
 which seemed as if they would never leave off blooming. One day Kay and Gerda sat looking at a book full of 
 pictures of animals and birds, and then just as the clock in the church tower struck twelve, Kay said, 
@@ -346,57 +398,6 @@ made entirely of snow, fell off, and he saw a lady, tall and white, it was the S
 the snow crackled; over them flew the black screaming crows, and above all shone the moon, clear and bright,
 —and so Kay passed through the long winter’s night, and by day he slept at the feet of the Snow Queen.  """
 #print(intro3)
-
-print("But how had little Gerda fared during Kay's absence?")
-print("...")
-print("You are", hero, ", distraught at Kay's disappearance")
-print("""\ncommands are: 
-	quit, help, inventory, exits, look, 
-	move [compass direction - word or first letter], inspect [name], 
-	take [item_name], use [item_name] on [name]""")
-
-to_quit = False
-while(to_quit != True):
-	command = input("you are in {}. What do you do?\n".format(hero.location))
-	if (command == "quit"):
-		to_quit = True
-	elif (command == "help"):
-		print("commands are: quit, help, inventory, exits, look, inspect [item_name], move [compass direction]")
-	elif (command == "inventory"):
-		print(hero.items)
-	elif (command == "exits"):
-		print("Exits are:", hero.location.get_exits())
-	elif (command == "look"):
-		print(hero.location.inspect())
-	elif (command[:4] == "move"):
-		hero.move(command[5:])
-	elif (command[:7] == "inspect"):
-		x = command[8:].lower()
-		if x == hero.name.lower():
-			print(hero.inspect())
-		elif x == hero.location.name.lower():
-			print(hero.location.inspect())
-		elif x in [i.name.lower() for i in hero.items]:
-			for j in hero.items:
-				if x == j.name.lower():
-					print(j.inspect())
-		elif x in [i.name.lower() for i in hero.location.objects]:
-			for j in hero.location.objects:
-				if x == j.name.lower():
-					print(j.inspect())
-		else:
-			print("you don't see anything with that name here")
-	elif(command[:4] == "take"):
-		hero.take(command[5:])
-	elif(command[:3] == "use"):
-		on_index = command.find(" on ")
-		if on_index == -1:
-			print("use format: use [item_name] on [name]")
-		else:
-			hero.use_item(command[4:on_index], command[(on_index+4):])
-	else:
-		print("I don't understand that")
-
 
 """
 print(hero.location)

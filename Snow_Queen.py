@@ -422,7 +422,7 @@ print(hero.location)
 hero.location.inspect()
 
 
-"""production notes:
+production notes:
 		issue: maybe set attribute to rooms so instead of seperate nswe attributes, just one List (or array?)
 			of exits. Or maybe dictionary? keys = chars, values = rooms? Use **kwargs?
 		conclusion: set char->room dictionary attribute exits, default None, function add_exits

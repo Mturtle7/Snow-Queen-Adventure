@@ -59,7 +59,7 @@ class Player(Element):
 		if (not dir):
 			print("Move_error: not a cardinal direction (north, east, south, west, or first letters thereof)")
 		elif (dir in self.location.exits):
-			print("Moving", dir)
+			print("Moving", dir.name.lower())
 			self.location = self.location.exits[dir]
 		else:
 			print("Move_error: no exit that way")
@@ -184,6 +184,8 @@ def run_game(player_name):
 			print(hero.location.inspect())
 		elif (command[:4] == "move"):
 			hero.move(command[5:])
+		elif (get_direction(command)):
+			hero.move(command)
 		elif (command[:7] == "inspect"):
 			x = command[8:].lower()
 			if x == hero.name.lower():

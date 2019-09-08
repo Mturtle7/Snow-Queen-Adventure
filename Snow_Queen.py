@@ -3,6 +3,7 @@
 #by Milo Kim
 
 from enum import Enum, auto
+import re
 
 #define classes
 #class Game:
@@ -233,32 +234,54 @@ def initialize_test_game(player_name, player_descr):
 
 	return Player(player_name, player_descr, test_room1)
 
+def parse_map(map_string):
+	# will be like [{name:"deep_forest",start:19,end:aa,west:name,east:name}]
+	previous_room_list = []
+	# will be like [{position:22,locked:True}]
+	exits = []
+	current_room_list = []
+	lines = map_string.split("\n")
+	for line in lines:
+		current_room_list = []
+		previous_room = None
+		for m in re.finditer(r'(:)?(\w+)', line):
+			room = dict()
+			#m.group(1) = ':'
+			#m.group(2) = 'crossroads'
+			#m.group(0) = ':crossroads'
+			room['name'] = m.group(2)
+			room['start'] = m.start
+			room['end'] = m.end
+			if (m.group(1) and previous_room):
+				room['west'] = previous_room['name']
+				previous_room['east'] = room['name']
+			previous_room = room
+
 def initialize_game(player_name, player_descr):
 
-	"""	map: n
-			w e
-			 s
+	# north is up, west is left, east is right
+	map = parse_map("""
+                    a             :b               c
+               deepredroom  :lightblueroom
 
-					deep_forest
-						^#
-					stables
-						^
-			 		bedrooms		kitchens
-			 			^				^
-			 		first_hall-> <-second_hall
-						^				^
-					palace_gates	back_stairs
-						^#				^#
-			old_hollow-><-crossroads->garden_path
-						^#
-			odd_house->flower_garden
-			^
-			cherry_orchard
-			^#
-			river_bank-><-start_room
-
-			#maybe make finction to actually read in this ASCII map and make the corresponding exits
-	"""
+                    deep_forest
+                        ^#
+                    stables
+                        ^
+                     bedrooms        kitchens
+                         ^              ^
+                     first_hall:second_hall
+                        ^              ^
+                    palace_gates   back_stairs
+                        ^#              ^#
+            old_hollow:crossroads:garden_path
+                           ^#
+            odd_house:flower_garden
+                 ^
+            cherry_orchard
+                 ^#
+            river_bank-><-start_room
+	""")
 
 	"""puzzle notes:
 		player BEGINS with item "eyes", which almost always say "you see the light of hope inside it - just as always. Kay used to see it too."

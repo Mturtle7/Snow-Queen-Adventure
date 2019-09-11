@@ -12,12 +12,16 @@ from enum import Enum, auto
 #	def win(self):
 #		print("Congratulations,", self.player + "!")
 
+#makes compass with names and numbers for easy parsing & conversion
 class Direction(Enum):
 	NORTH = auto()
 	SOUTH = auto()
 	EAST = auto()
 	WEST = auto()
 
+#inputs: string
+#returns: if string is a compass direction OR the first letter of one, returns the
+# corresponding MatchObject. Otherwise, reutrns None 
 def get_direction(s):
 	s = s.lower()
 	for name, dir in Direction.__members__.items():
@@ -25,6 +29,7 @@ def get_direction(s):
 			return dir
 	return None
 
+#root class for all elements within the game
 class Element():
 	lastest_id = 1
 	def __init__(self, id, name, descr):
@@ -41,6 +46,7 @@ class Element():
 	def __repr__(self):
 		return self.__str__()
 
+#object through which the player conducts all game actions and interacts with the world
 class Player(Element):
 	#attributes: name (string), location (Room), items (list of Items)
 	def __init__(self, name, descr, location, inventory = []):
@@ -98,7 +104,7 @@ class Player(Element):
 			print("you don't have that with you")
 
 
-
+#specific places that make up the game map; limits player's actions to itself & its contents
 class Room(Element): 
 	#attributes: name (string), descr (string), objects (list of Things), exits (dictionary of chars->rooms)
 
@@ -132,6 +138,7 @@ class Room(Element):
 			response += ("\nThere is a {} here".format(x))
 		return response
 
+#interactable object, to be placed within a Room's "objects" array
 class Thing(Element):
 	#attribues: name(string), descr(string), is_used(boolean)
 	def __init__(self, name, descr):
@@ -140,6 +147,7 @@ class Thing(Element):
 		self.descr = descr
 		self.is_changed = False
 
+#Thing that can be picked up and used by Player to activate a certain function
 class Item(Thing):
 	#attribues: name(string), descr(string), use(function), is_used(boolean)
 	def __init__(self, name, descr, use):
@@ -155,12 +163,15 @@ class Item(Thing):
 			target.is_changed = True
 		return check
 
+#Thing that remains in one room, but whose state can be changed by Item methods
 #class SetPiece(Thing):
 #	def __init__(self, name, descr, use):
 #		self.name = name
 #		self.descr = descr
 #		self.is_changed = False
 
+
+#main loop that prompts for and processes commands from the actual player
 def run_game(player_name):
 	hero = initialize_game(player_name, "an innocent young girl, searching for her friend Kay")
 	print("You are", hero, ", distraught at Kay's disappearance")
@@ -213,6 +224,7 @@ def run_game(player_name):
 		else:
 			print("I don't understand that")
 
+#tiny test map originally used to test basic class methods
 def initialize_test_game(player_name, player_descr):
 	balloon = Thing("Balloon", "a test Set Piece, to be popped with the Pin")
 	def pin_pop(target, player):
@@ -233,6 +245,7 @@ def initialize_test_game(player_name, player_descr):
 
 	return Player(player_name, player_descr, test_room1)
 
+#constructor for entire Snow Queen game map and its contents
 def initialize_game(player_name, player_descr):
 
 	"""	map: n
@@ -347,13 +360,11 @@ But now, the smell of real live roses reminds you of the fresh and brave roses b
 	return new_player
 
 
-#Main Program
-
+#MAIN PROGRAM
 print("*	*	*	*	*	*	*	*	*	*\nThe Snow Queen: A Fairy Tale Adventure\nBy Milo Kim")
 print("includes original descriptions from the Hans Christian Anderson fairy tale\n*	*	*	*	*	*	*	*	*	*")
 
 #intro entirely made from excerpts from fairy tale (except for user input)
-
 intro1 = """In a large town, full of houses and people, there is not room for everybody to have even a little garden, 
 therefore they are obliged to be satisfied with a few flowers in flower-pots. 
 In one of these large towns lived two poor children who had a garden something larger and better than a few flower-pots. 
@@ -365,8 +376,8 @@ player_name = input("The boy's name was Kay. What was the girl's name?")
 run_game(player_name)
 
 
-
-#remember to replace "Gerda" w/ player name here if these are ever actually included in intro
+#extra prose content from original tale; insert into intro later?
+#remember to replace "Gerda" w/ player name here if these are ever actually included
 intro2 = """...Those were splendid summer days. How beautiful and fresh it was out among the rose-bushes, 
 which seemed as if they would never leave off blooming. One day Kay and Gerda sat looking at a book full of 
 pictures of animals and birds, and then just as the clock in the church tower struck twelve, Kay said, 

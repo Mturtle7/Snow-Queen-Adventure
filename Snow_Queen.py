@@ -248,15 +248,14 @@ def initialize_test_game(player_name, player_descr):
 
 #inputs: string representaiton of map, with : and ^ as horizontal and veritcal exits
 # and # added onto each locked exit, and space-seperated names of the rooms.
-# horizontal exits are attached to the right-hand room
+# horizontal exits are attached to the east-side room
 #returns: Player object??? Room object???
 #still in progress
 def parse_map(map_string):
 	# will be like [{name:"deep_forest",start:19,end:aa,west:name,east:name}]
 	previous_room_list = []
 	# will be like [{position:22,locked:True}]
-	exits = []
-	current_room_list = []
+	exits_vert = []
 	lines = map_string.split("\n")
 	for line in lines:
 		current_room_list = []
@@ -272,7 +271,27 @@ def parse_map(map_string):
 			if (m.group(1) and previous_room):
 				room['west'] = previous_room['name']
 				previous_room['east'] = room['name']
-			previous_room = room
+			current_room_list.append(room.copy())
+			previous_room = room.copy()
+		for n in re.finditer(r'(#)?(^)', line):
+			exit = dict()
+			exit['position'] = n.end
+			if (n.group(1)):
+				exit['locked'] = True
+			else:
+				exit['locked'] = False
+			exits_vert.append(exit.copy())
+
+
+
+#unit test for parse_map
+def test_parse_map(map_string):
+	map_string = ("""
+		one_room :two_room :three_room
+					#^			^
+				red_room    :blue_room
+	""")
+	parse_map(map_string)
 
 #constructor for entire Snow Queen game map and its contents
 def initialize_game(player_name, player_descr):
@@ -283,22 +302,22 @@ def initialize_game(player_name, player_descr):
                deepredroom  :lightblueroom
 
                     deep_forest
-                        ^#
+                        #^
                     stables
                         ^
                      bedrooms        kitchens
                          ^              ^
-                     first_hall:second_hall
+                     first_hall :second_hall
                         ^              ^
-                    palace_gates   back_stairs
-                        ^#              ^#
-            old_hollow:crossroads:garden_path
-                           ^#
-            odd_house:flower_garden
-                 ^
+                     palace_gates   back_stairs
+                          #^              #^
+            old_hollow :crossroads :garden_path
+                           #^
+            odd_house :flower_garden
+                 #^
             cherry_orchard
-                 ^#
-            river_bank-><-start_room
+                 #^
+            river_bank :start_room
 	""")
 
 	"""puzzle notes:
@@ -399,9 +418,10 @@ In one of these large towns lived two poor children who had a garden something l
 They were not brother and sister, but they loved each other almost as much as if they had been."""
 print(intro1)
 player_name = input("The boy's name was Kay. What was the girl's name?")
-#player_name = "Gerda"
+player_name = "Gerda"
 
 run_game(player_name)
+
 
 
 #extra prose content from original tale; insert into intro later?
